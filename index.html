@@ -1,0 +1,1071 @@
+<!doctype html>
+<html lang="sl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Hook Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: Tasty Dose packaging language — espresso/cream like the Coffee 2.0 pouch, angle chips styled as the pouch's benefit tags; inputs left, the 10 prompts right. */
+  :root {
+    --bg: #f2eee7;
+    --panel: #fbf9f5;
+    --ink: #2b211c;
+    --muted: #6f625a;
+    --line: #e2dad0;
+    --accent: #3b2d26;        /* espresso pouch */
+    --accent-ink: #f6f1e9;
+    --copper: #a2672f;        /* the round seal on every pouch */
+    --field: #f6f2ec;
+    --mush-line: #3b2d26;
+    --logo-filter: none;
+    --pain: #7d2735;      --pain-bg: #f3e1e3;   /* collagen burgundy */
+    --cur: #9c5a22;       --cur-bg: #f5e7d6;    /* caramel */
+    --consp: #4a3d36;     --consp-bg: #e7dfd7;  /* dark roast */
+    --proof: #56632f;     --proof-bg: #e6ead8;  /* matcha */
+    --danger: #a3262c;
+    --font-display: "Inter Tight", "Helvetica Neue", Arial, sans-serif;
+    --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1b1613; --panel: #251f1b; --ink: #f1eae0; --muted: #b0a398; --line: #3a312b;
+      --accent: #e9dcc8; --accent-ink: #2b211c; --copper: #d6a065; --field: #2c2520; --mush-line: #1b1613;
+      --logo-filter: invert(1);
+      --pain: #f09aa6; --pain-bg: #3d1e24; --cur: #e7aa6c; --cur-bg: #3b2a19;
+      --consp: #d8c9bd; --consp-bg: #3a302a; --proof: #b8c77f; --proof-bg: #2b3119;
+      --danger: #ff8d85; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1b1613; --panel: #251f1b; --ink: #f1eae0; --muted: #b0a398; --line: #3a312b;
+    --accent: #e9dcc8; --accent-ink: #2b211c; --copper: #d6a065; --field: #2c2520; --mush-line: #1b1613;
+    --logo-filter: invert(1);
+    --pain: #f09aa6; --pain-bg: #3d1e24; --cur: #e7aa6c; --cur-bg: #3b2a19;
+    --consp: #d8c9bd; --consp-bg: #3a302a; --proof: #b8c77f; --proof-bg: #2b3119;
+    --danger: #ff8d85; color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: var(--font-body); font-size: 15px; line-height: 1.55;
+  }
+  .wrap {
+    max-width: 1240px; margin: 0 auto;
+    padding-block: 24px 64px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+
+  /* header */
+  header { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 16px 24px; margin-bottom: 24px; }
+  @media (max-width: 760px) { header { grid-template-columns: minmax(0, 1fr); } }
+  .brand { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .brand-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .logo { height: 46px; width: auto; filter: var(--logo-filter); }
+  .brand-sep { width: 1px; height: 34px; background: var(--line); }
+  h1 { font-family: var(--font-display); font-weight: 800; font-size: 2.4rem; line-height: 1; letter-spacing: -0.035em; margin: 0; }
+  .eyebrow { font-family: var(--font-display); font-weight: 700; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .tag { color: var(--muted); margin: 4px 0 0; max-width: 64ch; }
+  .shroom-row { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: flex-end; gap: 2px; max-width: 520px; }
+  .shroom { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 62px; transition: transform .25s ease; }
+  .shroom:hover { transform: translateY(-6px) rotate(-5deg); }
+  .shroom svg { width: 56px; height: 56px; overflow: visible; transform-origin: 50% 100%;
+    animation: breathe var(--b, 5s) ease-in-out var(--d, 0s) infinite; }
+  .shroom span { font-size: 0.62rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+  @media (max-width: 760px) { .shroom-row { justify-content: flex-start; max-width: none; } .shroom { width: 54px; } .shroom svg { width: 46px; height: 46px; } }
+  @media (max-width: 460px) { .shroom { width: 44px; } .shroom svg { width: 40px; height: 40px; } .shroom span { font-size: 0.5rem; } }
+  /* always alive: breathing, blinking, swaying leaves */
+  @keyframes breathe {
+    0%, 100% { transform: translateY(0) scale(1, 1) rotate(0deg); }
+    25% { transform: translateY(-2px) scale(0.98, 1.03) rotate(-2deg); }
+    50% { transform: translateY(0) scale(1.03, 0.97) rotate(0deg); }
+    75% { transform: translateY(-1px) scale(0.99, 1.02) rotate(2deg); }
+  }
+  .eyes { transform-box: fill-box; transform-origin: 50% 50%; animation: blink 4.6s steps(1, end) var(--d, 0s) infinite; }
+  .shroom:nth-child(2n) .eyes { animation-duration: 5.7s; }
+  .shroom:nth-child(3n) .eyes { animation-duration: 3.9s; }
+  @keyframes blink { 0%, 93%, 100% { transform: scaleY(1); } 94%, 97% { transform: scaleY(0.12); } }
+  .sway { transform-box: fill-box; transform-origin: 50% 100%; animation: sway 3.2s ease-in-out var(--d, 0s) infinite alternate; }
+  @keyframes sway { from { transform: rotate(-6deg); } to { transform: rotate(6deg); } }
+  @media (prefers-reduced-motion: reduce) { .shroom svg, .eyes, .sway { animation: none; } .shroom { transition: none; } }
+  .face-eye { fill: var(--mush-line); }
+
+  .grid { display: grid; grid-template-columns: minmax(0, 400px) minmax(0, 1fr); gap: 24px; align-items: start; }
+  @media (max-width: 900px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+  .step { display: flex; flex-direction: column; gap: 8px; }
+  .step-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  label.lbl, span.lbl { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.005em; }
+  .lbl small { font-family: var(--font-body); font-weight: 400; color: var(--muted); }
+  .sub { font-weight: 600 !important; font-size: 0.9rem; }
+  .hint { color: var(--muted); font-size: 0.85rem; margin: 0; }
+  textarea, select, input[type="text"], input[type="number"] {
+    width: 100%; font: inherit; color: var(--ink); background: var(--field);
+    border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px;
+  }
+  textarea { resize: vertical; min-height: 120px; line-height: 1.5; }
+  #script { min-height: 170px; }
+  textarea:focus-visible, select:focus-visible, input:focus-visible, button:focus-visible, summary:focus-visible, .drop:focus-within {
+    outline: 2px solid var(--copper); outline-offset: 2px;
+  }
+  .linkbtn { background: none; border: 0; padding: 0; color: var(--copper); font: inherit; font-size: 0.85rem; font-weight: 500; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+
+  .drop {
+    position: relative; border: 1.5px dashed var(--line); border-radius: 10px; padding: 16px;
+    text-align: center; color: var(--muted); background: var(--field); cursor: pointer;
+  }
+  .drop.over { border-color: var(--copper); color: var(--ink); }
+  .drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+  .drop strong { color: var(--ink); }
+  .frames { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .frames figure { margin: 0; position: relative; }
+  .frames img { display: block; width: 100%; aspect-ratio: 9 / 16; object-fit: cover; border-radius: 6px; background: var(--line); }
+  .frames figcaption { position: absolute; left: 4px; bottom: 4px; font-family: var(--font-mono); font-size: 0.68rem; background: rgba(0,0,0,.65); color: #fff; padding: 1px 4px; border-radius: 3px; }
+  .vidrow { display: flex; justify-content: space-between; gap: 8px; align-items: center; font-size: 0.85rem; color: var(--muted); min-width: 0; }
+  .vidrow span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 420px) { .row2 { grid-template-columns: 1fr; } }
+  .dur { display: flex; align-items: center; gap: 8px; }
+  .dur input { width: 5.5em; flex: none; font-variant-numeric: tabular-nums; }
+  .dur span { color: var(--muted); }
+
+  /* angle chips = the pouch's benefit tags (ENERGY · FOCUS · IMMUNITY) */
+  .mix { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pill { font-family: var(--font-display); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border-radius: 3px; white-space: nowrap; }
+  .a-pain { color: var(--pain); background: var(--pain-bg); }
+  .a-curiosity { color: var(--cur); background: var(--cur-bg); }
+  .a-conspiracy { color: var(--consp); background: var(--consp-bg); }
+  .a-proof { color: var(--proof); background: var(--proof-bg); }
+
+  .go {
+    font-family: var(--font-display); font-weight: 700; font-size: 1.02rem; letter-spacing: -0.005em;
+    border: 0; border-radius: 10px; padding: 14px 16px;
+    background: var(--accent); color: var(--accent-ink); cursor: pointer;
+  }
+  .go:hover:not(:disabled) { filter: brightness(1.12); }
+  .go:disabled { opacity: 0.55; cursor: not-allowed; }
+  .ghost { font: inherit; font-weight: 500; border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 8px; padding: 7px 12px; cursor: pointer; }
+  .ghost:hover:not(:disabled) { border-color: var(--copper); }
+  .ghost:disabled { opacity: 0.5; cursor: not-allowed; }
+  .err { color: var(--danger); font-size: 0.9rem; margin: 0; }
+
+  /* results */
+  .results { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+  .bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+  .bar h2 { font-family: var(--font-display); font-weight: 800; font-size: 1.35rem; margin: 0; letter-spacing: -0.025em; }
+  .filters { display: flex; flex-wrap: wrap; gap: 6px; }
+  .filters button { font: inherit; font-size: 0.82rem; border: 1px solid var(--line); background: var(--panel); color: var(--muted); border-radius: 999px; padding: 4px 11px; cursor: pointer; }
+  .filters button[aria-pressed="true"] { color: var(--accent-ink); background: var(--accent); border-color: var(--accent); }
+  .status { color: var(--muted); font-size: 0.9rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .hop { display: inline-flex; gap: 2px; }
+  .hop svg { width: 26px; height: 26px; animation: hop 1.2s ease-in-out infinite; transform-origin: 50% 100%; }
+  .hop svg:nth-child(2) { animation-delay: .15s; } .hop svg:nth-child(3) { animation-delay: .3s; }
+  @keyframes hop { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px) rotate(-6deg); } }
+  @media (prefers-reduced-motion: reduce) { .hop svg, .shroom svg { animation: none; transition: none; } }
+  .example-note { font-size: 0.85rem; color: var(--muted); background: var(--panel); border: 1px dashed var(--line); border-radius: 8px; padding: 8px 12px; margin: 0; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 12px; align-items: start; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .card-top { display: flex; align-items: center; gap: 8px; }
+  .tc { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); margin-left: auto; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .card h3 { margin: 0; font-size: 0.92rem; font-weight: 600; color: var(--muted); flex: 1; min-width: 0; }
+  .idea { font-family: var(--font-display); font-weight: 700; font-size: 1.14rem; line-height: 1.32; letter-spacing: -0.015em; margin: 0; text-wrap: pretty; }
+  .vo { font-family: var(--font-display); font-weight: 700; font-size: 1.16rem; line-height: 1.32; letter-spacing: -0.015em; margin: 0; text-wrap: pretty; }
+  .vo::before { content: "VO"; font-family: var(--font-mono); font-size: 0.66rem; font-weight: 500; letter-spacing: 0.08em; color: var(--copper); vertical-align: 0.25em; margin-right: 8px; }
+  .sl { margin: -4px 0 0; color: var(--muted); font-size: 0.86rem; font-style: italic; }
+  .card .idea { font-family: var(--font-body); font-weight: 400; font-size: 0.92rem; letter-spacing: 0; }
+  .why { margin: 0; font-size: 0.88rem; color: var(--muted); }
+  .meta { margin: -4px 0 0; font-size: 0.78rem; font-weight: 600; color: var(--copper); }
+  .risk { margin: 0; font-size: 0.84rem; font-weight: 600; color: var(--danger); background: var(--pain-bg); border-radius: 6px; padding: 6px 10px; }
+  .banned ul { columns: 2; margin-top: 8px; column-gap: 18px; display: block; }
+  .banned li { break-inside: avoid; margin-bottom: 4px; }
+  @media (max-width: 420px) { .banned ul { columns: 1; } }
+  .playbook { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--field); }
+  .playbook summary { color: var(--ink); }
+  .playbook ul { margin: 10px 0 2px; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; color: var(--muted); }
+  .playbook b { color: var(--ink); font-weight: 600; }
+  .why b { font-family: var(--font-display); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; color: var(--copper); margin-right: 6px; }
+  details { border-top: 1px solid var(--line); padding-top: 8px; }
+  summary { cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--copper); list-style-position: inside; }
+  pre.prompt {
+    margin: 8px 0 0; padding: 12px; background: var(--field); border: 1px solid var(--line); border-radius: 8px;
+    font-family: var(--font-mono); font-size: 0.76rem; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere;
+    max-height: 360px; overflow: auto;
+  }
+  .card-foot { display: flex; justify-content: flex-end; gap: 8px; }
+  .card-foot .ghost { font-size: 0.82rem; padding: 5px 10px; }
+  .skeleton { border-style: dashed; color: var(--muted); justify-content: center; align-items: center; min-height: 150px; font-size: 0.9rem; gap: 6px; }
+  .skeleton svg { width: 48px; height: 48px; animation: hop 1.6s ease-in-out infinite; transform-origin: 50% 100%; }
+  @media (prefers-reduced-motion: reduce) { .skeleton svg { animation: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="brand-row">
+        <img class="logo" src="logo.png" alt="Tasty Dose" width="101" height="46">
+        <span class="brand-sep" aria-hidden="true"></span>
+        <h1>Hook Lab</h1>
+      </div>
+      <div class="mix" aria-label="Koti hookov">
+        <span class="pill a-pain">Pain point</span><span class="pill a-curiosity">Curiosity</span><span class="pill a-conspiracy">Conspiracy</span><span class="pill a-proof">Proof</span>
+      </div>
+      <p class="tag">Vstaviš skripto, referenčni video in navodila CS-ja. Dobiš 10 hookov kot pripravljene prompte za video (po kadrih, s časovnico). Brez napisov na zaslonu.</p>
+    </div>
+    <div class="shroom-row" id="shroomRow" aria-label="Sestavine"></div>
+  </header>
+
+  <div class="grid">
+    <form class="panel" id="form" autocomplete="off">
+      <div class="step">
+        <div class="step-head">
+          <label class="lbl" for="script">1 · Skripta <small>v katerem koli jeziku</small></label>
+          <button type="button" class="linkbtn" id="loadTxt">Naloži .txt</button>
+          <input type="file" id="txtFile" accept=".txt,.srt,.md,text/plain" hidden>
+        </div>
+        <textarea id="script" placeholder="Prilepi celotno skripto VSL-a ali vsaj prvo minuto …"></textarea>
+      </div>
+
+      <div class="step">
+        <span class="lbl">2 · Referenčni video <small>neobvezno</small></span>
+        <div class="drop" id="drop">
+          <input type="file" id="video" accept="video/*" aria-label="Izberi referenčni video">
+          <strong>Povleci video sem</strong> ali klikni za izbiro<br>
+          <span class="hint">Video ostane na tvojem računalniku. Claudu pošljem samo nekaj sličic, največ iz prvih sekund.</span>
+        </div>
+        <div id="vidInfo" hidden>
+          <div class="vidrow"><span id="vidName"></span><button type="button" class="linkbtn" id="vidClear">Odstrani</button></div>
+          <div class="frames" id="frames"></div>
+        </div>
+        <label class="lbl sub" for="styleSel">Stil</label>
+        <select id="styleSel"></select>
+        <label class="lbl sub" for="refNote">Lasten opis stila ali reference <small>neobvezno, dopolni ali nadomesti izbiro</small></label>
+        <input type="text" id="refNote" placeholder="npr. »dež, modra svetloba, veliko bližnjih planov«">
+        <p class="hint">Claude vidi samo sličice in ne sliši zvoka. Kar je pomembno, a se ne vidi, napiši sem.</p>
+      </div>
+
+      <div class="step">
+        <label class="lbl" for="cs">3 · Navodila CS-ja</label>
+        <textarea id="cs" placeholder="Ciljna skupina, glavni pain point, kaj ne smemo pokazati ali trditi, ton …"></textarea>
+      </div>
+
+      <div class="row2">
+        <div class="step">
+          <label class="lbl" for="dur">Dolžina hooka</label>
+          <div class="dur"><input type="number" id="dur" min="2" max="30" step="1" value="15"><span>s (2–30)</span></div>
+        </div>
+        <div class="step">
+          <label class="lbl" for="lang">Jezik VO</label>
+          <select id="lang">
+            <option value="auto">Kot skripta</option>
+            <option>slovenščina</option><option>angleščina</option><option>nemščina</option>
+            <option>hrvaščina</option><option>češčina</option><option>španščina</option>
+            <option>madžarščina</option><option>nizozemščina</option><option>poljščina</option>
+          </select>
+        </div>
+      </div>
+      <p class="hint" style="margin-top:-12px">Vsak hook ima prvo vrstico VO (za snemanje in podnapise v montaži) in prompt za video. Prompt je v angleščini in brez govora, ker VO dodaš v montaži.</p>
+
+      <div class="step">
+        <label class="lbl" for="stage">Stage videa</label>
+        <select id="stage">
+          <option value="ST1">ST1: hladna publika, brez izdelka</option>
+          <option value="ST2">ST2: topla publika, brez izdelka</option>
+          <option value="ST3">ST3: vroča publika, izdelek dovoljen</option>
+        </select>
+        <p class="hint" id="stageHint"></p>
+      </div>
+      <div class="step">
+        <label class="lbl" for="fmt">Tip videa</label>
+        <select id="fmt">
+          <option value="auto">Samodejno (po skripti)</option>
+          <option value="ultra">Ultra VSL: prvoosebna drama</option>
+          <option value="mini">Mini VSL: zgodovina, simptomi, razlaga, UGC</option>
+          <option value="animation">Animation: animiran lik ali maskota</option>
+          <option value="vougc">Voiceover UGC: pričevanje čez UGC posnetke</option>
+          <option value="mix">Mešano: različni tipi</option>
+        </select>
+      </div>
+      <div class="step">
+        <label class="lbl" for="persona">Persona <small>top na trgu (Atria)</small></label>
+        <select id="persona"></select>
+        <input type="text" id="personaCustom" placeholder="Opiši persono, npr. »moški 50+, gradbinec, utrujen, pivski trebuh«" hidden>
+      </div>
+      <div class="step">
+        <label class="lbl" for="promise">Oglasni kot <small>glavna obljuba, top na trgu (Atria)</small></label>
+        <select id="promise"></select>
+        <p class="hint">»Samodejno« pomeni, da Claude izbere, kar se najbolj ujema s skripto. »Razporedi« pomeni, da hooke razdeli med več person ali kotov, da jih lahko testiraš.</p>
+      </div>
+
+      <div class="step">
+        <span class="lbl sub">Razdelitev 10 hookov</span>
+        <div class="mix">
+          <span class="pill a-pain">3 × pain point</span>
+          <span class="pill a-curiosity">3 × curiosity</span>
+          <span class="pill a-conspiracy">2 × conspiracy</span>
+          <span class="pill a-proof">2 × proof</span>
+        </div>
+      </div>
+
+      <details class="playbook banned">
+        <summary>Pravila za Meta oglase: prepovedano in dovoljeno</summary>
+        <p class="hint" style="margin:8px 0 0">Claude dobi ta seznam kot najstrožje pravilo, strožje od vsega ostalega. Kartica, katere prompt vseeno omeni kaj takega, dobi rdeče opozorilo. <b>Če se moraš vprašati, ali je kader primeren, skoraj zagotovo ni.</b></p>
+        <ul id="bannedList"></ul>
+        <p class="hint" style="margin:10px 0 0"><b>Dovoljeno, če je narejeno spoštljivo:</b></p>
+        <ul id="allowedList"></ul>
+      </details>
+
+      <details class="playbook">
+        <summary>Kaj deluje: naučeno iz 32 zmagovalnih videov</summary>
+        <ul>
+          <li><b>Ultra VSL = drama v prvi osebi.</b> Ženska ali moški 40–55 pove resnično zgodbo o javnem ponižanju ali izdaji. Izdelka v hooku ni.</li>
+          <li><b>Moška verzija deluje enako dobro:</b> žena odide k 27-letnemu trenerju, na njej zavoha drugega moškega, neznanec na vratih vpraša »Ste vi Marijin mož?«.</li>
+          <li><b>Prvi stavek pove vse</b> v 3–5 s: oseba + dogodek + preobrat. <i>»Tašča me je pred vso družino označila za debelo. Mož ni rekel niti besede.«</i></li>
+          <li><b>Most do skrivnosti</b> v 10–20 s: <i>»Edini razlog, da se nisem zlomila, je bilo tisto, kar mi je kolegica Camila prinesla iz Brazilije.«</i> (frizerka, grška babica, brat iz Norveške)</li>
+          <li><b>Ponižanje pred pričami:</b> družinska miza, prijatelji na kavču, svatje. Telo je skrita bolečina, nosita jo VO in obraz.</li>
+          <li><b>Slika:</b> prvi kader je pogosto širok prizor, ki dobesedno pokaže prve besede in lahko stoji 3–5 s. Bližnji plan reakcije pride kot vrhunec. Čustvo nosijo simbolni predmeti (prstan na obleki, stikalo luči, šopek z uro), ne telo.</li>
+          <li><b>Mini VSL:</b> zgodovinski paradoks (budistični menihi brez trebuha 600 let, vikingi, Kleopatra); seznam »simptom → sestavina« ali lestev sestavin; »razloženo v 30 sekundah«; nagovor organu (»tvoja jetra so predelala vsako pivo«); UGC s preobratom; »delala sem vse prav«.</li>
+          <li><b>Podrobnosti:</b> 27 let, 47 let, šest ur vožnje, štiri številke manj. Najpogostejši stil je 3D animacija, nato fotorealizem, 2D za zgodovino. Podnapisi pridejo v montaži.</li>
+        </ul>
+      </details>
+
+      <button type="submit" class="go" id="go">Generiraj 10 hookov</button>
+      <p class="err" id="formErr" hidden></p>
+      <p class="hint" id="noClaude" hidden>Generiranje deluje samo, ko je stran odprta na claude.ai.</p>
+    </form>
+
+    <section class="results" aria-live="polite">
+      <div class="bar">
+        <h2 id="resTitle">Primer rezultata</h2>
+        <div class="filters" id="filters">
+          <button type="button" data-f="all" aria-pressed="true">Vsi</button>
+          <button type="button" data-f="pain" aria-pressed="false">Pain point</button>
+          <button type="button" data-f="curiosity" aria-pressed="false">Curiosity</button>
+          <button type="button" data-f="conspiracy" aria-pressed="false">Conspiracy</button>
+          <button type="button" data-f="proof" aria-pressed="false">Proof</button>
+        </div>
+      </div>
+      <div class="status" id="status" hidden></div>
+      <p class="example-note" id="exNote">To so izmišljeni primeri, da vidiš obliko. Ko vneseš svojo skripto in klikneš »Generiraj«, jih zamenja 10 tvojih hookov.</p>
+      <div class="cards" id="cards"></div>
+      <div class="bar" id="actions" hidden>
+        <span class="hint" id="countNote"></span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" class="ghost" id="copyAll">Kopiraj vse prompte</button>
+          <button type="button" class="ghost" id="again">Novih 10</button>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const ORDER = ["pain", "curiosity", "conspiracy", "proof"];
+
+  // ---------- cute functional mushrooms (Tasty Dose superfoods) ----------
+  const face = (x, y, s = 1) => `
+    <g class="eyes"><circle class="face-eye" cx="${x - 5 * s}" cy="${y}" r="${1.9 * s}"/><circle class="face-eye" cx="${x + 5 * s}" cy="${y}" r="${1.9 * s}"/>
+    <circle cx="${x - 4.4 * s}" cy="${y - 0.7 * s}" r="${0.6 * s}" fill="#fff"/><circle cx="${x + 5.6 * s}" cy="${y - 0.7 * s}" r="${0.6 * s}" fill="#fff"/></g>
+    <ellipse cx="${x - 8.5 * s}" cy="${y + 3 * s}" rx="${2.4 * s}" ry="${1.4 * s}" fill="#f2899a" opacity=".75"/><ellipse cx="${x + 8.5 * s}" cy="${y + 3 * s}" rx="${2.4 * s}" ry="${1.4 * s}" fill="#f2899a" opacity=".75"/>
+    <path d="M${x - 2.2 * s} ${y + 3 * s} q${2.2 * s} ${2.4 * s} ${4.4 * s} 0" fill="none" stroke="#3b2d26" stroke-width="${1.3 * s}" stroke-linecap="round"/>`;
+  const svg = (inner, label) => `<svg viewBox="0 0 64 64" role="img" aria-label="${label}">${inner}</svg>`;
+  const OUT = 'stroke="#3b2d26" stroke-width="1.6" stroke-linejoin="round"';
+  const SHROOMS = [
+    { name: "Reishi", svg: svg(`
+      <rect x="28" y="40" width="8" height="18" rx="4" fill="#c8794a" ${OUT}/>
+      <path d="M6 38 C4 22 20 10 34 11 C50 12 61 24 58 37 C55 44 44 42 32 44 C20 46 8 46 6 38 Z" fill="#9c3b27" ${OUT}/>
+      <path d="M12 36 C14 24 26 17 36 18 C47 19 54 27 52 35" fill="none" stroke="#c4612f" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M8 39 C20 43 40 41 57 36" fill="none" stroke="#efc27a" stroke-width="2.4" stroke-linecap="round"/>
+      <ellipse cx="22" cy="20" rx="5" ry="2.2" fill="#fff" opacity=".35" transform="rotate(-25 22 20)"/>
+      ${face(32, 29)}`, "Reishi") },
+    { name: "Lion's mane", svg: svg(`
+      <path d="M10 34 C8 18 22 8 34 9 C48 10 58 20 55 35 C54 40 50 42 46 42 L18 42 C13 42 10 39 10 34 Z" fill="#f6efe2" ${OUT}/>
+      <g stroke="#3b2d26" stroke-width="1.6" stroke-linecap="round" fill="#f6efe2">
+        <path d="M15 41 l-1 11"/><path d="M20 42 l0 14"/><path d="M25 42 l0 11"/><path d="M30 42 l0 15"/><path d="M35 42 l0 12"/><path d="M40 42 l0 15"/><path d="M45 42 l1 11"/><path d="M50 40 l1 9"/>
+      </g>
+      <path d="M17 18 q4 -4 9 -4 M38 13 q6 1 9 5" stroke="#d9cbb3" stroke-width="2" fill="none" stroke-linecap="round"/>
+      ${face(32, 28)}`, "Lion's mane") },
+    { name: "Shiitake", svg: svg(`
+      <path d="M26 36 L24 57 C24 59 40 59 40 57 L38 36 Z" fill="#f1e4cd" ${OUT}/>
+      <path d="M5 36 C5 18 18 8 32 8 C46 8 59 18 59 36 C59 39 56 40 52 40 L12 40 C8 40 5 39 5 36 Z" fill="#8a5434" ${OUT}/>
+      <g fill="#e9cfa8"><circle cx="18" cy="20" r="1.8"/><circle cx="27" cy="14" r="1.5"/><circle cx="40" cy="15" r="2"/><circle cx="48" cy="23" r="1.6"/><circle cx="13" cy="30" r="1.4"/><circle cx="52" cy="32" r="1.3"/></g>
+      ${face(32, 29)}`, "Shiitake") },
+    { name: "Maitake", svg: svg(`
+      <path d="M24 44 C22 52 26 58 32 58 C38 58 42 52 40 44 Z" fill="#efe2cb" ${OUT}/>
+      <path d="M4 34 C4 24 12 20 20 24 C20 30 22 40 26 46 C16 47 4 44 4 34 Z" fill="#8f7a64" ${OUT}/>
+      <path d="M60 34 C60 24 52 20 44 24 C44 30 42 40 38 46 C48 47 60 44 60 34 Z" fill="#8f7a64" ${OUT}/>
+      <path d="M12 22 C12 12 22 7 30 12 C28 20 28 34 30 44 C20 42 12 34 12 22 Z" fill="#a8927a" ${OUT}/>
+      <path d="M52 22 C52 12 42 7 34 12 C36 20 36 34 34 44 C44 42 52 34 52 22 Z" fill="#a8927a" ${OUT}/>
+      <path d="M20 18 C22 6 42 6 44 18 C44 30 40 42 32 46 C24 42 20 30 20 18 Z" fill="#bfa98e" ${OUT}/>
+      ${face(32, 27, 0.85)}`, "Maitake") },
+    { name: "Cordyceps", svg: svg(`
+      <path d="M14 58 C14 46 10 36 13 22 C14 17 20 17 21 22 C22 36 20 46 21 58 Z" fill="#e88b35" ${OUT}/>
+      <path d="M43 58 C44 46 42 38 45 26 C46 21 52 21 52 26 C53 38 50 46 50 58 Z" fill="#e88b35" ${OUT}/>
+      <path d="M25 58 C25 44 22 30 26 12 C27 6 37 6 38 12 C42 30 39 44 39 58 Z" fill="#f29a3e" ${OUT}/>
+      <path d="M29 11 q3 -2 6 0" stroke="#ffd29a" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M8 58 H56" stroke="#3b2d26" stroke-width="1.6" stroke-linecap="round"/>
+      ${face(32, 26, 0.8)}`, "Cordyceps") },
+    { name: "Tremella", svg: svg(`
+      <path d="M32 8 C38 8 40 13 44 12 C50 11 54 17 52 22 C58 24 59 31 55 35 C59 40 56 47 50 47 C49 53 43 57 38 54 C35 58 29 58 26 54 C21 57 15 53 14 47 C8 47 5 40 9 35 C5 31 6 24 12 22 C10 17 14 11 20 12 C24 13 26 8 32 8 Z" fill="#f6e3a9" ${OUT}/>
+      <path d="M20 20 C24 26 22 30 18 32 M44 20 C40 26 42 30 46 32 M24 46 C28 42 36 42 40 46" fill="none" stroke="#e5c56f" stroke-width="2" stroke-linecap="round"/>
+      <ellipse cx="25" cy="15" rx="4" ry="1.8" fill="#fff" opacity=".55" transform="rotate(-20 25 15)"/>
+      ${face(32, 31)}`, "Tremella") },
+    { name: "Rhodiola", svg: svg(`
+      <g class="sway">
+        <path d="M26 30 C24 22 22 16 18 10 M32 30 L32 8 M38 30 C40 22 42 16 46 10" fill="none" stroke="#5f7a34" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M27 24 C21 22 19 18 20 15 C24 16 27 19 27 24 Z M37 24 C43 22 45 18 44 15 C40 16 37 19 37 24 Z" fill="#7d9a43" ${OUT}/>
+        <g fill="#f5c63c" stroke="#3b2d26" stroke-width="1.1">
+          <circle cx="15" cy="9" r="2.6"/><circle cx="19" cy="6.5" r="2.6"/><circle cx="20" cy="10.5" r="2.4"/>
+          <circle cx="30" cy="6" r="2.6"/><circle cx="34" cy="5" r="2.6"/><circle cx="32" cy="9" r="2.4"/>
+          <circle cx="45" cy="6.5" r="2.6"/><circle cx="49" cy="9" r="2.6"/><circle cx="44" cy="10.5" r="2.4"/>
+        </g>
+      </g>
+      <path d="M16 38 C16 30 24 27 32 27 C40 27 48 30 48 38 C48 48 42 54 38 55 L36 60 M28 60 L26 55 C22 54 16 48 16 38 Z" fill="#d98f73" ${OUT}/>
+      <path d="M22 34 q3 -2 6 -1 M40 47 q3 0 4 -3" stroke="#f1b79c" stroke-width="2" fill="none" stroke-linecap="round"/>
+      ${face(32, 40)}`, "Rhodiola") },
+    { name: "Guarana", svg: svg(`
+      <g class="sway"><path d="M33 12 C38 4 48 3 54 6 C50 12 42 15 33 12 Z" fill="#6f9440" ${OUT}/><path d="M36 11 C42 8 47 7 51 7" stroke="#4d6b2a" stroke-width="1.1" fill="none"/></g>
+      <path d="M32 10 C46 10 56 22 55 37 C54 50 44 58 32 58 C20 58 10 50 9 37 C8 22 18 10 32 10 Z" fill="#d6402f" ${OUT}/>
+      <path d="M20 14 C24 22 40 22 44 14 C40 11 24 11 20 14 Z" fill="#f7f2e8" ${OUT}/>
+      <circle cx="32" cy="16.5" r="4.4" fill="#231a16"/><circle cx="33.5" cy="15" r="1.3" fill="#fff"/>
+      <path d="M14 34 q2 -9 9 -13" stroke="#f07a62" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      ${face(32, 38)}`, "Guarana") },
+  ];
+  $("shroomRow").innerHTML = SHROOMS.map((m, i) => `<div class="shroom" title="${m.name}" style="--d:${(i * 0.37).toFixed(2)}s;--b:${(5.2 + (i % 3) * 1.3).toFixed(1)}s">${m.svg}<span>${m.name}</span></div>`).join("");
+  const ANGLES = {
+    pain: { label: "Pain point", cls: "a-pain" },
+    curiosity: { label: "Curiosity", cls: "a-curiosity" },
+    conspiracy: { label: "Conspiracy", cls: "a-conspiracy" },
+    proof: { label: "Proof", cls: "a-proof" },
+  };
+
+  // The format every generated prompt must follow (the team's own house format).
+  const FORMAT_EXAMPLE = `DURATION: 19 SECONDS
+
+19-second vertical 9:16 Ultra VSL ad, fully 3D animated in a distinctive animated-feature-film style with expressive, appealing characters, rendered sharper and more tactile than usual: visible fabric fibres and knit weave, fine individual hair strands, glistening water droplets, wet asphalt reflections, rich volumetric light, deep soft shadows and shallow cinematic depth of field, so every surface feels touchable. Very emotional, dramatic facial acting, slightly exaggerated but believable. Dynamic cinematic camera: fast push-ins, sweeping moves, whip pans and flowing transitions where one scene passes into the next. 11 clearly different shots with a quick cut or a flowing transition between every shot.
+
+CHARACTERS:
+- The woman (main character, created in this clip – keep her look exactly as described): about 45, white European, heavy-set and clearly overweight but not obese, a swollen round face with a soft full chin, puffy tired eyes with dark circles, looking ten years older than she is; a slightly bloated, firm stomach, so her top fits a little snug around the middle and hangs over her belt; honey-blonde curly shoulder-length hair in a messy low ponytail; a slim silver watch with a metal link strap on her left wrist, a thin gold wedding ring, short natural unpainted nails, no tattoos; a loose oatmeal-beige long-sleeve knit top, mid-blue jeans and a brown leather belt (NO BRAND).
+- Her husband: about 45, white European, dark wavy hair, clean-shaven, charming smile, a charcoal-grey knit polo shirt and beige chinos (NO BRAND).
+- His old school friend: about 45, white European man, neatly styled salt-and-pepper hair, short trimmed beard, well-dressed in a camel wool overcoat over a black turtleneck (NO BRAND).
+
+LOOK: Moody and cinematic. Present: cold blue dusk light, rain, glowing streetlights, wet reflections. Shots marked [PAST]: warm golden sunlight.
+
+TIMELINE (every shot starts exactly at the given second):
+0–1s: HOOK – inside her parked car at dusk, looking out through the rain-streaked windscreen: the wiper is already mid-sweep and clears the glass, revealing across the wet car park a parked silver hatchback (NO BRAND) whose fogged side window shows two blurred male silhouettes leaning close together.
+1–2s: The camera rushes forward fast from the windscreen straight onto her face: her eyes fly wide open, a single tear spills over, her mouth drops open in shock with lips closed tight again at once; rain shadows run down her face.
+2–4s: [PAST, that morning] Warm hallway: her husband, already mid-stride, pulls on a navy jacket (NO BRAND) and snatches his car keys (NO BRAND) from a ceramic bowl, grinning eagerly.
+4–6s: Whip pan across the rainy car park: the old school friend leans against the silver hatchback, straightening his overcoat collar, as the husband hurries toward him through the rain.
+6–8s: Low wide angle, the camera slides sideways past her car: in the foreground her blurred profile behind her rain-covered side window; in the background the fogged window of the silver hatchback where the two silhouettes lean close together, never clearly visible.
+8–10s: [PAST, two months earlier] The camera flies through a single raindrop on the windscreen into a sunny golden driveway: she waves cheerfully as her husband lifts a small dark-grey suitcase (NO BRAND) into the boot of his car (NO BRAND).
+10–12s: [PAST] He smiles back at her over his shoulder, shuts the boot and drives away; she keeps waving, warm and trusting, autumn leaves swirling around her.
+12–14s: Back in the rainy car at night: she drops her forehead onto the steering wheel, shoulders shaking with silent sobs, her hands clutching the wheel, her wedding ring glinting under a streetlight.
+14–16s: Sweeping aerial flight over Oslo harbour at sunrise: colourful wooden houses on the water, boats, a plane crossing the pink sky.
+16–17s: A fit woman with a sleek silver-white bob, a navy zip-up sports jacket and black athletic trousers, seen only from behind, strides through a bright airport arrivals hall pulling a suitcase (NO BRAND); her face is never visible.
+17–19s: The camera rises up and away from the woman's lone car in the empty rainy car park at dusk, headlights glowing, until the car is small in the frame. Hold.
+
+AUDIO: No dialogue, no voiceover, no music. Only rain on glass, wiper squeak, soft city ambience.
+
+CONSTRAINTS: Lips closed in every shot; no talking. Quick cut or flowing camera transition between every shot; no two consecutive shots look alike. Every shot starts mid-action. Nobody ever looks into the camera. The two men in the car are only blurred silhouettes behind a fogged window – never a clear view of what they do. No coffee products in this clip. Everything is plain (NO BRAND). No text, signs, number plates or logos. No mirrors, no rear-view mirror visible. Natural hands and fingers. No slow motion. No digital zoom (camera moves only).
+
+ENDING STATE: High wide shot of her single car with glowing headlights in the empty rainy car park at dusk.`;
+
+  const EX_PROMPT = (title) => `DURATION: 6 SECONDS
+
+6-second vertical 9:16 Ultra VSL ad, … (primer – ${title})
+
+CHARACTERS:
+- The woman (main character): about 50, …
+
+LOOK: …
+
+TIMELINE (every shot starts exactly at the given second):
+0–1s: HOOK – …
+1–3s: …
+3–6s: …
+
+AUDIO: …
+
+CONSTRAINTS: … No text, captions, subtitles, signs, number plates or logos.
+
+ENDING STATE: …`;
+  const EXAMPLES = [
+    { angle: "pain", name: "Odtis, ki ne izgine", vo: "Wenn deine Socken Abdrücke an den Knöcheln hinterlassen und dein Gesicht morgens rund und geschwollen ist …", sl: "Če ti nogavice puščajo odtise na gležnjih in je tvoj obraz zjutraj okrogel in zabuhel …", idea: "Nogavica obleži na tleh spalnice, ona obrne staro družinsko fotografijo na nočni omarici z licem navzdol in ugasne luč.", why: "Simptome pove VO, slika pa jih pokaže le s predmeti in njeno reakcijo, zato je kader varen za Meto.", prompt: EX_PROMPT("Odtis, ki ne izgine") },
+    { angle: "curiosity", name: "Fotka, ki boli", vo: "Letzte Woche hat mich meine Tochter auf einem Foto nicht erkannt. Ich auch nicht.", sl: "Prejšnji teden me hči ni prepoznala na fotografiji. Tudi jaz se nisem.", idea: "Hči ji pokaže telefon s skupinsko fotko, kamera hitro zdrsne na njen obraz, ki se prepozna šele čez sekundo.", why: "Prvi stavek se konča z vprašanjem »zakaj?«, ki ga gledalka želi zapreti (playbook točka 3).", prompt: EX_PROMPT("Fotka, ki boli") },
+    { angle: "conspiracy", name: "Maskota voda", vo: "Ich bin das Wasser in deinen Beinen. Und hier sind drei Dinge, die du bitte weiter tun sollst.", sl: "Jaz sem voda v tvojih nogah. In tukaj so tri stvari, ki jih, prosim, še naprej počni.", idea: "Srčkana animirana kapljica vode z očali se udobno namesti v naslanjaču iz blazin in samozavestno našteva navade.", why: "Maskota zlobnež se norca dela iz navad, ki jih gledalka že počne, kar je zmagovalni format.", prompt: EX_PROMPT("Maskota voda") },
+    { angle: "proof", name: "Maščevanje na poroki", vo: "Mein Ex sagte, ich hätte mich gehen lassen. Zur Hochzeit seiner Schwester kam ich in ihrem Kleid.", sl: "Bivši je rekel, da sem se zanemarila. Na poroko njegove sestre sem prišla v njeni obleki.", idea: "Vrata svatbene dvorane se odprejo, vsi se obrnejo, ona v elegantni obleki, bivši obstane s kozarcem v roki.", why: "Maščevanje s preobrazbo obljubi viden rezultat znotraj zgodbe, brez trditev o izdelku.", prompt: EX_PROMPT("Maščevanje na poroki") },
+  ];
+
+  let hooks = [];
+  let isExample = true;
+  let filter = "all";
+  let frames = [];
+  let ctl = null;
+  let sample = null;
+  let maxImages = 0;
+  let blocked = false;
+  let running = 0;
+
+  // ---------- funnel stages: audience temperature and tone ----------
+  const STAGES = {
+    ST1: { sl: "Hladna publika: nas ne pozna in še ne ve, da ima problem, ki ga rešujemo. Ton: čustvena zgodba, presenečenje, odprto vprašanje. Nič prodajnega.",
+      en: "AUDIENCE: cold. They have never heard of us and may not even link their symptoms to a problem we solve. The hook must stop a stranger mid-scroll with pure story, emotion and curiosity: a relatable human moment or a surprising paradox. TONE: emotional, intimate, cinematic, zero selling, no jargon, no mechanism yet. Angles lean on the drama itself (pain and curiosity as story beats)." },
+    ST2: { sl: "Topla publika: problem pozna in je morda že videla naše oglase, rešitve pa še ne. Ton: empatičen, »aha«, razkrije skriti vzrok in zakaj dosedanji poskusi niso delovali.",
+      en: "AUDIENCE: warm. They know the problem (bloating, belly after 40, low energy, stress) and may have seen our ads, but don't know the real cause or our solution yet. The hook names the problem they already recognise and promises the hidden cause or why everything they tried failed (diets, 10,000 steps, fibre). TONE: empathetic and revealing, an 'aha' moment, a little educational but still story-led, never a pitch. Conspiracy and curiosity angles reveal the mechanism (gut, cortisol, hormones) without naming the product." },
+    ST3: { sl: "Vroča publika: izdelek pozna (retargeting), a še ni kupila. Ton: samozavesten, neposreden, dokaz, odgovori na dvome, izdelek je lahko v hooku.",
+      en: "AUDIENCE: hot. They know Tasty Dose and the product (retargeting: visited, watched, added to cart) but haven't bought yet. The hook speaks to someone who already knows us: answer the main doubt (taste, does it really work, price, 'I've tried everything'), show the product in a real moment, and use social proof or results that appear in the script. Use an offer or urgency only if the script or CS mentions one. TONE: confident, direct, warm, like a friend saying 'just try it'. The product MAY appear and be named in the hook." },
+  };
+  const showStage = () => { $("stageHint").textContent = STAGES[$("stage").value].sl; };
+
+  // ---------- visual styles the team produces ----------
+  const STYLES = [
+    { name: "3D Pixar", en: "3D animated-feature-film style (Pixar-like): expressive, appealing characters, tactile materials, rich volumetric light, cinematic depth of field" },
+    { name: "Drama", en: "photoreal live-action drama look: naturalistic acting, film lighting, shallow depth of field, intimate handheld or dolly camera" },
+    { name: "Claymation", en: "stop-motion claymation: handmade clay characters and sets, visible fingerprints and texture, slightly stepped stop-motion movement" },
+    { name: "Personified object", en: "personified objects: everyday objects, ingredients or organs with cute faces and personality as the characters, animated" },
+    { name: "Historical", en: "historical reenactment: authentic period costumes, sets and props (ancient, medieval, viking…), cinematic documentary feel, everyone decently dressed" },
+    { name: "AI cinematic", en: "photoreal AI cinematic: high-end commercial look, golden-hour or moody light, sweeping drone and dolly moves" },
+    { name: "Stickman", en: "minimal 2D stickman doodle explainer: simple stick figures on flat solid-colour backgrounds, arrows and icons, background colour changes with each beat" },
+    { name: "Zack D", en: "Zack D. Films-style short viral 3D explainer: clean, slightly stylized realistic CG, simple neutral settings, smooth camera, a 'what happens if…' scenario played out step by step" },
+    { name: "2D cartoon", en: "2D cartoon: flat or illustrated hand-drawn animation, bold outlines, warm graphic-novel colours" },
+    { name: "UGC B-roll", en: "UGC B-roll: handheld smartphone footage, natural window light, everyday home moments, authentic and unpolished, nobody posing for camera" },
+    { name: "3D Anatomy", en: "3D anatomy visualisation: clean, stylized medical-style CG of organs and body systems (gut, liver, hormones), glowing and educational, never gross, no blood, no doctors or labs" },
+    { name: "UGC talking head", en: "UGC talking head: one person speaking straight to a selfie-style phone camera at home or in the car, natural light, authentic and casual", talks: true },
+    { name: "Hologram", en: "hologram: glowing translucent cyan/blue holographic projections of the body, ingredients or data floating in a dark futuristic space" },
+    { name: "Suno singing", en: "musical: characters sing the VO as a catchy song (music generated with Suno), music-video staging and rhythm-cut editing", sings: true },
+    { name: "3D Blender", en: "stylized 3D Blender render: clean shapes, soft toy-like materials, studio lighting, product-visualisation polish" },
+  ];
+
+  // ---------- market data from Atria (top personas and ad angles in the niche) ----------
+  const PERSONAS = [
+    { en: "The Middle-Aged Man Struggling with Weight and Stress", sl: "Moški srednjih let: teža in stres", share: 20, n: 587 },
+    { en: "The Midlife Man Struggling with Energy and Confidence", sl: "Moški v srednjih letih: energija in samozavest", share: 13, n: 365 },
+    { en: "The Middle-Aged Woman Struggling with Energy and Weight", sl: "Ženska srednjih let: energija in teža", share: 13, n: 364 },
+    { en: "The Midlife Woman Concerned with Body Image", sl: "Ženska v srednjih letih: podoba telesa", share: 8, n: 246 },
+    { en: "The Wellness Seeker", sl: "Iskalec dobrega počutja", share: 7, n: 205 },
+  ];
+  const PROMISES = [
+    { en: "Hormone reset", sl: "Hormonski reset", share: 8, n: 226 },
+    { en: "Fix your gut, fix your body", sl: "Uredi črevesje, uredi telo", share: 8, n: 223 },
+    { en: "Reclaim your body after 40", sl: "Telo nazaj po 40.", share: 7, n: 203 },
+    { en: "Fix your cortisol, fix your body", sl: "Uredi kortizol, uredi telo", share: 6, n: 160 },
+    { en: "Reclaim your body from midlife changes", sl: "Telo nazaj kljub spremembam srednjih let", share: 5, n: 156 },
+  ];
+  const opts = (list) => `<option value="auto">Samodejno (po skripti)</option><option value="mix">Razporedi med top 5</option>` +
+    list.map((x, i) => `<option value="${i}">${x.sl} · ${x.share} %</option>`).join("");
+  const OUR_PERSONAS = ["GUT-OPTI", "GUT-OPTI-M", "GUT-OPTI-F", "HT-MOM", "C-DAD", "C-MOM", "L-DAD", "L-MOM", "NEU-FEM", "PERI-MOM", "HT-DAD", "LM-DAD", "LM-MOM"];
+  // Facts only: what the code itself says, plus which winning ads used it (from their file names).
+  const SEEN_IN = { "C-MOM": "Libido, Cortisol-belly", "C-DAD": "Dad-bod", "L-DAD": "Hangover", "LM-MOM": "Belly-Face, Belly", "GUT-OPTI": "Poop-more", "GUT-OPTI-M": "Poop-more", "GUT-OPTI-F": "Poop-more" };
+  function codeHint(code) {
+    const who = /(-MOM|-F|-FEM)$/.test(code) ? "a woman about 40–55" : /(-DAD|-M)$/.test(code) ? "a man about 40–55" : "a man or a woman about 40–55";
+    const bits = [`narrator/viewer is ${who}`];
+    if (code.startsWith("GUT")) bits.push("the theme is gut health (digestion, bloating, regularity)");
+    if (code.startsWith("PERI")) bits.push("she is in perimenopause");
+    if (SEEN_IN[code]) bits.push(`our winning ads for this persona were about: ${SEEN_IN[code]}`);
+    return bits.join("; ");
+  }
+  $("persona").innerHTML = `<option value="auto">Samodejno (po skripti)</option><option value="mix">Razporedi med top 5 iz Atrie</option>` +
+    `<optgroup label="Naše persone">${OUR_PERSONAS.map((c) => `<option value="code:${c}">${c}</option>`).join("")}</optgroup>` +
+    `<optgroup label="Top persone na trgu (Atria)">${PERSONAS.map((x, i) => `<option value="${i}">${x.sl} · ${x.share} %</option>`).join("")}</optgroup>` +
+    `<option value="custom">Drugo: vpišem sam</option>`;
+  const syncPersona = () => { const c = $("persona").value === "custom"; $("personaCustom").hidden = !c; if (c) $("personaCustom").focus(); };
+  $("persona").addEventListener("change", syncPersona);
+  $("styleSel").innerHTML = `<option value="auto">Samodejno (po referenci ali vzorcu)</option><option value="mix">Mešano: različni stili</option>` +
+    STYLES.map((x, i) => `<option value="${i}">${x.name}</option>`).join("") + `<option value="custom">Drugo: vpišem sam</option>`;
+  $("styleSel").addEventListener("change", () => { if ($("styleSel").value === "custom") $("refNote").focus(); });
+  $("promise").innerHTML = opts(PROMISES);
+
+  // ---------- drafts (per-viewer convenience) ----------
+  const DRAFT_KEY = "hooklab-draft-v2";
+  const fields = ["script", "cs", "refNote", "lang", "dur", "persona", "promise", "fmt", "styleSel", "stage", "personaCustom"];
+  try {
+    const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || localStorage.getItem("hooklab-draft-v1") || "{}");
+    fields.forEach((f) => {
+      if (d[f] == null) return;
+      const el = $(f);
+      if (el.tagName === "SELECT" && ![...el.options].some((o) => o.value === d[f])) return;
+      el.value = d[f];
+    });
+  } catch {}
+  let saveT;
+  fields.forEach((f) => $(f).addEventListener("input", () => {
+    clearTimeout(saveT);
+    saveT = setTimeout(() => {
+      try { localStorage.setItem(DRAFT_KEY, JSON.stringify(Object.fromEntries(fields.map((k) => [k, $(k).value])))); } catch {}
+    }, 400);
+  }));
+
+  function duration() {
+    const n = Math.round(Number($("dur").value));
+    return Math.min(30, Math.max(2, Number.isFinite(n) ? n : 15));
+  }
+  $("dur").addEventListener("change", () => { $("dur").value = duration(); });
+
+  // ---------- render ----------
+  function esc(s) { return String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+  function promptDur(h) { const m = /DURATION:\s*(\d+)/i.exec(h.prompt || ""); return m ? Number(m[1]) : null; }
+  function tc(sec) { return sec ? `00:00–00:${String(sec).padStart(2, "0")}` : ""; }
+  function cardHTML(h, i) {
+    const a = ANGLES[h.angle];
+    const d = promptDur(h);
+    return `<article class="card" data-angle="${h.angle}">
+      <div class="card-top"><span class="pill ${a.cls}">${a.label}</span><h3>${esc(h.name)}</h3><span class="tc">#${String(i + 1).padStart(2, "0")} · ${tc(d)}</span></div>
+      ${h.persona || h.promise ? `<p class="meta">${[h.persona && slName(PERSONAS, h.persona), h.promise && slName(PROMISES, h.promise)].filter(Boolean).map(esc).join(" · ")}</p>` : ""}
+      ${h.vo ? `<p class="vo">${esc(h.vo)}</p>` : ""}
+      ${h.sl ? `<p class="sl">${esc(h.sl)}</p>` : ""}
+      <p class="idea">${esc(h.idea)}</p>
+      ${h.why ? `<p class="why"><b>Zakaj</b>${esc(h.why)}</p>` : ""}
+      ${h.risks?.length ? `<p class="risk">Preveri pred uporabo, prompt omenja: ${h.risks.map(esc).join(", ")}</p>` : ""}
+      <details><summary>Prompt za video</summary><pre class="prompt">${esc(h.prompt)}</pre></details>
+      <div class="card-foot"><button type="button" class="ghost" data-copy="${i}">Kopiraj prompt</button></div>
+    </article>`;
+  }
+  function slName(list, en) {
+    const k = en.toLowerCase().replace(/[^a-z]/g, "");
+    const hit = list.find((x) => x.en.toLowerCase().replace(/[^a-z]/g, "") === k);
+    return hit ? hit.sl : en;
+  }
+  function sorted() {
+    return hooks.map((h, i) => ({ h, i })).sort((x, y) => ORDER.indexOf(x.h.angle) - ORDER.indexOf(y.h.angle) || x.i - y.i);
+  }
+  function render(pending = 0) {
+    const list = sorted();
+    let html = list.map(({ h }, pos) => (filter === "all" || h.angle === filter) ? cardHTML(h, pos) : "").join("");
+    if (filter === "all") for (let k = 0; k < pending; k++) html += `<div class="card skeleton">${SHROOMS[(hooks.length + k) % SHROOMS.length].svg}<span>Hook ${hooks.length + k + 1} še raste …</span></div>`;
+    $("cards").innerHTML = html;
+    $("exNote").hidden = !isExample;
+    $("resTitle").textContent = isExample ? "Primer rezultata" : `Tvojih ${hooks.length} hookov`;
+    $("actions").hidden = isExample || pending > 0 || hooks.length === 0;
+    $("countNote").textContent = hooks.length && hooks.length < 10 && !pending ? `Prišlo je ${hooks.length} od 10. Klikni »Novih 10« za ponovni poskus.` : "";
+  }
+  const pendingCount = () => (running ? Math.max(0, 10 - hooks.length) : 0);
+
+  $("filters").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-f]"); if (!b) return;
+    filter = b.dataset.f;
+    $("filters").querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    render(pendingCount());
+  });
+
+  async function copy(text, btn) {
+    const old = btn.textContent;
+    try { await navigator.clipboard.writeText(text); btn.textContent = "Kopirano"; }
+    catch {
+      const ta = document.createElement("textarea"); ta.value = text; document.body.append(ta); ta.select();
+      try { document.execCommand("copy"); btn.textContent = "Kopirano"; } catch { btn.textContent = "Označi ročno"; }
+      ta.remove();
+    }
+    setTimeout(() => (btn.textContent = old), 1500);
+  }
+  $("cards").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-copy]"); if (!b) return;
+    const { h } = sorted()[Number(b.dataset.copy)];
+    copy(h.vo ? `VO: ${h.vo}\n\n${h.prompt}` : h.prompt, b);
+  });
+  $("copyAll").addEventListener("click", (e) => {
+    const text = sorted().map(({ h }, pos) => `===== HOOK ${pos + 1} · ${ANGLES[h.angle].label.toUpperCase()} · ${h.name} =====\n${h.persona ? `Persona: ${h.persona}\n` : ""}${h.promise ? `Kot: ${h.promise}\n` : ""}\n${h.vo ? `VO: ${h.vo}\n\n` : ""}${h.prompt}`).join("\n\n\n");
+    copy(text, e.currentTarget);
+  });
+
+  // ---------- script file ----------
+  $("loadTxt").addEventListener("click", () => $("txtFile").click());
+  $("txtFile").addEventListener("change", async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    $("script").value = await f.text();
+    $("script").dispatchEvent(new Event("input"));
+    e.target.value = "";
+  });
+
+  // ---------- video → frames ----------
+  const drop = $("drop");
+  ["dragenter", "dragover"].forEach((t) => drop.addEventListener(t, () => drop.classList.add("over")));
+  ["dragleave", "drop"].forEach((t) => drop.addEventListener(t, () => drop.classList.remove("over")));
+  $("video").addEventListener("change", (e) => { const f = e.target.files[0]; if (f) loadVideo(f); });
+  $("vidClear").addEventListener("click", clearVideo);
+
+  function clearVideo() {
+    frames.forEach((f) => URL.revokeObjectURL(f.url));
+    frames = []; $("frames").innerHTML = ""; $("vidInfo").hidden = true; drop.hidden = false; $("video").value = "";
+  }
+  function fmt(t) { const m = Math.floor(t / 60), s = Math.floor(t % 60); return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`; }
+
+  async function loadVideo(file) {
+    clearVideo();
+    drop.hidden = true; $("vidInfo").hidden = false;
+    $("vidName").textContent = `${file.name} · berem sličice …`;
+    const url = URL.createObjectURL(file);
+    const v = document.createElement("video");
+    v.muted = true; v.playsInline = true; v.preload = "auto"; v.src = url;
+    try {
+      await new Promise((res, rej) => { v.onloadeddata = res; v.onerror = () => rej(new Error("format")); });
+      const d = v.duration || 0;
+      const n = Math.max(1, Math.min(maxImages || 8, 8));
+      const early = [0.3, 1.5, 3, 5, 7.5].filter((t) => t < d).slice(0, Math.ceil(n / 2));
+      const rest = n - early.length;
+      const later = Array.from({ length: rest }, (_, k) => Math.min(d - 0.1, 10 + ((d - 10) * (k + 0.5)) / rest)).filter((t) => t > 10);
+      const times = [...early, ...later].slice(0, n);
+      const canvas = document.createElement("canvas");
+      const scale = Math.min(1, 720 / Math.max(v.videoWidth, v.videoHeight));
+      canvas.width = Math.round(v.videoWidth * scale); canvas.height = Math.round(v.videoHeight * scale);
+      const ctx = canvas.getContext("2d");
+      for (const t of times) {
+        await new Promise((res) => { v.onseeked = res; v.currentTime = t; });
+        ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
+        const blob = await new Promise((res) => canvas.toBlob(res, "image/jpeg", 0.82));
+        if (blob) frames.push({ blob, url: URL.createObjectURL(blob), t });
+      }
+      const ratio = canvas.width && canvas.height ? `${canvas.width} / ${canvas.height}` : "9 / 16";
+      $("frames").innerHTML = frames.map((f) => `<figure><img src="${f.url}" alt="Sličica pri ${fmt(f.t)}" style="aspect-ratio:${ratio}"><figcaption>${fmt(f.t)}</figcaption></figure>`).join("");
+      $("vidName").textContent = `${file.name} · ${fmt(d)} · ${frames.length} sličic`;
+    } catch {
+      $("vidName").textContent = `${file.name}: tega videa brskalnik ne zna odpreti. Poskusi MP4 (H.264).`;
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  // ---------- prompt ----------
+  const ANGLE_DEF = {
+    pain: "PAIN POINT — a first-person humiliation or betrayal story where the body change is the hidden wound, told through the situation and her emotion, never shown on her body; or a symptom call-out in the VO where each line is shown with an everyday object or reaction (a sock left on the bedroom floor, a ring she can't take off, an old photo she turns face down), never a close-up of the body.",
+    curiosity: "CURIOSITY — a first-person story whose first line ends on an unanswered why/what-happened-next (\"He looked at me like a stranger. At home I finally understood why.\"), or a historical/exotic paradox (monks with no belly for 600 years, vikings who drank more beer yet stayed strong).",
+    conspiracy: "CONSPIRACY — what common advice, doctors, the diet industry or 'everyone' gets wrong; best as a cute, clean villain-mascot POV that mocks the viewer's current habits (\"Keep eating fibre — you think that pushes me out?\") or a narrator who discovers what she was never told, or 'I did everything right' (kale, 10,000 steps) and it still failed.",
+    proof: "PROOF — a revenge/comeback tease that promises a result inside the story (\"My husband cheated with a model, so at 51 I became a model at her agency.\"). Show only the confident AFTER moment (her entrance, people turning their heads), never a before/after comparison, never invented numbers.",
+  };
+
+  // Tasty Dose internal rules: what may NEVER appear in Meta creatives (risk: fines, inspection, blocked ad account).
+  const BANNED = [
+    ["Topljenje maščobe", "fat melting or dissolving, even animated"],
+    ["Golota in neprimerno razgaljene osebe", "nudity, underwear/lingerie or sexualized undress — every person and AI/3D character decently dressed. Swimwear or shirtless is fine ONLY where the context makes it normal (beach, pool) and it is shown respectfully, never sexualized"],
+    ["Prijemanje trebuha ali telesa v bližnjem planu", "close-ups of grabbing, pinching or squeezing the belly or any body part"],
+    ["Tehtnice", "scales of any kind"],
+    ["Prijemanje hlač v bližnjem planu", "close-ups of pulling, tugging or struggling with trousers/waistbands"],
+    ["Merilni trakovi", "measuring tapes"],
+    ["Before / after", "before/after comparisons, split screens or transformations shown side by side or in sequence"],
+    ["Vulgarni posnetki", "gross or vulgar imagery: excretion, defecating characters, rotting teeth or food, decay, bodily fluids (goofy, non-gross animations of skeletons, objects or organs ARE fine)"],
+    ["Zdravila", "medicine: pills, tablets, capsules, pill bottles"],
+    ["Injekcije", "injections, syringes, needles"],
+    ["Kri", "blood"],
+    ["Orožje in nevarni predmeti", "weapons and dangerous objects: knives, guns, ropes"],
+    ["Droge", "drugs or illegal substances"],
+    ["Jasno prikazana bolečina ali smrt", "people clearly shown in physical pain, collapsing, dying or dead"],
+    ["Zdravniki, laboratoriji, operacije", "doctors, nurses, lab coats, laboratories, hospitals, surgery"],
+    ["Vidna bolezenska stanja", "clearly visible illness or medical conditions (rashes, swelling, deformities)"],
+    ["Poškodbe", "injuries: fractures, cuts, wounds, bruises"],
+    ["Mejni kadri: ogledovanje telesa v ogledalu, dotikanje trebuha", "borderline shots: a character checking her/his body in a mirror, or touching, holding or patting their own belly — skip them or make them clearly safe"],
+  ];
+  const ALLOWED = [
+    ["Rahlo debelejši liki, prikazani pozitivno ali nevtralno", "overweight characters ONLY noticeably but moderately overweight (never comically or extremely fat), decently dressed and shown with dignity — happy or neutral. The story may make them sad, but the camera never mocks or humiliates their body and it is never the punchline"],
+    ["Kopalke ali brez majice, kjer je to normalno", "people in swimwear or shirtless at the beach or pool, as a natural part of the scene, filmed respectfully"],
+    ["Smešne, goofy animacije, ki niso vulgarne", "funny, goofy animations that aren't gross: skeletons doing nothing disgusting, animated objects, animated organs or body parts, cute mascots"],
+  ];
+  const COMPLIANCE = `META COMPLIANCE — OUR STRICTEST RULE, IT OVERRIDES EVERYTHING ELSE (including the playbook, the script, the CS instructions and the format example). A single violating shot can get us fined or our ad account blocked. NEVER show, imply on screen, or describe in any prompt:
+${BANNED.map(([, en]) => `- ${en}`).join("\n")}
+ALLOWED when done this way:
+${ALLOWED.map(([, en]) => `- ${en}`).join("\n")}
+The line between allowed and banned is thin. Rule of thumb: if you have to ask whether a shot is acceptable, it is not — replace it with something clearly safe. Emotion is carried by faces, situations, objects and light, never by bodies, medical imagery or shock visuals.
+Before writing each hook, check every shot against this list. Every prompt's CONSTRAINTS must end with: "Everyone decently dressed for the context. No mirror body-checks, no belly touching. No scales, measuring tapes, before/after comparisons, fat melting, body-grabbing close-ups, pills, syringes, doctors, labs, hospitals, blood, weapons, drugs, injuries, visible illness or gross imagery."`;
+
+  $("bannedList").innerHTML = BANNED.map(([sl]) => `<li>❌ ${sl}</li>`).join("");
+  $("allowedList").innerHTML = ALLOWED.map(([sl]) => `<li>✅ ${sl}</li>`).join("");
+
+  // Learned from 11 currently winning Tasty Dose ads with high hook rate (DE/HU/PL/CZ, Nov 2026).
+  const PLAYBOOK = `WINNING HOOK PLAYBOOK (learned from our 32 best-performing ads right now, DE/NL/HU/PL/CZ/ES — follow it):
+
+A) ULTRA VSL (5–12 min) = FIRST-PERSON DRAMA. This is the dominant winner.
+1. A narrator about 40–55 tells a real-life social humiliation or betrayal involving a close relationship. Women: husband, ex-husband, sister, mother-in-law, the ex's young new girlfriend, the employer she cleans for. MEN WIN TOO with the mirror version: the wife cheating or leaving for her 27-year-old gym trainer, smelling another man on her when she kisses their son, a stranger at the door asking "Are you Maria's husband?". The product is NOT mentioned or shown in the hook.
+2. The FIRST VO sentence tells the whole shocking situation in 3–5 s: person + concrete event + twist. Winners:
+   - "My sister is marrying my ex-husband in June — and I'm invited."
+   - "My mother-in-law called me fat in front of the whole family. My husband didn't say a word."
+   - "My husband told our whole circle of friends that he has to turn the light off to sleep with me."
+   - "My wife left me for the guy who trains her at the gym. He was 27. I'm 47."
+   - "My girlfriend's son introduced me to his teacher: 'This is my dad, he raised me since I was three.'"
+   - "My sister said I ruined her wedding. I didn't sleep with her husband. I just went down four dress sizes." (the twist IS the result)
+   - Cold-open dialogue also works: "Are you Maria's husband?" — "Who's asking?" — "She's not coming home tonight."
+3. The SECOND beat twists the knife or opens a loop ("…not to object, but to smile."; "He looked at me like a stranger."; "Tight jeans. A perfect smile. 25 years old.").
+4. THE BRIDGE: by 10–20 s the narrator names the person who saved her or him and hints at an exotic origin — "The only reason I didn't fall apart was what my colleague Camila brought me from Brazil." / "…what my hairdresser gave me." / "…my Greek grandmother." / "…until my brother flew in from Norway." / "My sister flew in." This opens the curiosity loop for the rest of the VSL.
+5. Pain comes from PUBLIC humiliation with witnesses in the frame (family dinner, friends on a sofa laughing, wedding guests, the school gate). The body change is the hidden wound, carried by VO and faces. The narrator may be moderately overweight (never comically fat), always shown with dignity; body close-ups are never the focus and her body is never the joke.
+6. Visuals: shot 1 is usually a WIDE or medium establishing tableau that literally shows the first VO words (the long family table, the front door, the classroom doorway, the wedding). It may HOLD 3–5 s with a slow push-in, and the close-up of the narrator's reaction (tears, shock) is the payoff at about 2.5–5 s. Use symbolic object close-ups to carry emotion instead of bodies: a wedding ring on a dress, the lamp pull-chain, a bouquet with a luxury watch, long nails on his chest, a bin bag of designer clothes. Glamorous, younger, fitter rival vs. ordinary tired narrator.
+
+B) MINI VSL (1–3 min) = SHORTER, FASTER, CAN NAME INGREDIENTS OR THE PRODUCT EARLY.
+7. Historical / exotic authority paradox, no suffering person on screen: "Buddhist monks in Japan haven't had a single belly in 600 years. No diet, no training. They take care of their gut." / "Vikings drank three times more beer than men today, yet had strong bodies… every morning a dark, bitter brew of wild mushrooms." / "The men who entered Cleopatra's chambers only came out three weeks later." Photoreal reenactment or illustrated style; the ritual becomes the product later.
+8. Symptom → ingredient listicle: "This is a sign of high cortisol — you need reishi. Bloated every afternoon whatever you eat — you need inulin. Wake up at 3 a.m. every night — you need magnesium…", with a numbered "1/6" structure. Or an ingredient stacking ladder: "If you take inulin, you go more often. Inulin plus reishi, the bloating goes. Add shiitake and sugar cravings fade…"
+9. Explainer: "The most common signs of [problem] after 40 — explained in 30 seconds."
+10. Talk to the organ: "Your liver has processed every beer you've ever drunk. It never complained once."
+11. UGC testimonial with a twist: "For years I was the one saying no. Now it's my husband." The product may appear by 4–6 s.
+12. "I did everything right" frustration (sets up conspiracy): "I ate kale, walked 10,000 steps a day, even did a month of…"
+
+C) ALWAYS
+13. Hyper-specific details: a month, a weekday, ages (27, 47, 54), "six hours' drive", "four dress sizes", "worth more than my car".
+14. 3D animated-feature style is the most common winner, then photoreal cinematic. Illustrated 2D works for history and explainers. Captions are burned in later from the VO, so the generated footage has no text.
+Adapt these mechanics to THIS script's audience and product. Do not copy the winners' stories.`;
+  function buildPrompt(mix) {
+    const sec = duration();
+    const langSel = $("lang").value;
+    const voLang = langSel === "auto" ? "the same language as the script" : langSel;
+    const sSel = $("styleSel").value;
+    const st = /^\d+$/.test(sSel) ? STYLES[+sSel] : null;
+    const onCam = st?.talks ? "talks" : st?.sings ? "sings" : null;
+    const speechBase = `Every hook has an opening VOICEOVER line ("vo") in ${voLang}, recorded and captioned separately in the edit. The TIMELINE shots must illustrate that VO phrase by phrase, with shot changes on its phrase breaks. The generated video itself has no speech: in AUDIO write "No dialogue, no voiceover, no music." plus the specific ambient sounds; in CONSTRAINTS keep "Lips closed in every shot; no talking."`;
+    const speechOnCam = onCam === "talks"
+      ? `Every hook has an opening line ("vo") in ${voLang} that the on-screen person SPEAKS straight to the camera, lip-synced. In AUDIO quote the line exactly with its timing. In CONSTRAINTS replace "Lips closed; no talking" and "Nobody looks into the camera" with "She/he speaks only the quoted line, looking into the lens."`
+      : `Every hook has an opening line ("vo") in ${voLang} that the characters SING as the first line of a catchy song (to be produced with Suno). In AUDIO quote the sung line with its timing and describe the music genre and tempo. In CONSTRAINTS replace "Lips closed; no talking" with "Characters sing only the quoted line, lip-synced."`;
+    const speech = onCam ? speechOnCam : sSel === "mix"
+      ? speechBase + " Exception: for a hook in the UGC talking-head style the person speaks the line to camera, and for a Suno-singing hook the characters sing it; adjust AUDIO and CONSTRAINTS for those hooks."
+      : speechBase;
+    const script = $("script").value.trim().slice(0, 50000);
+    const cs = $("cs").value.trim().slice(0, 8000);
+    const ref = $("refNote").value.trim().slice(0, 1500);
+    const imgs = frames.length && maxImages ? Math.min(frames.length, maxImages) : 0;
+    const pSel = $("persona").value, aSel = $("promise").value;
+    const nHooks = mix.reduce((n, [, c]) => n + c, 0);
+    const pList = PERSONAS.map((x) => `   - ${x.en} — ${x.share}% of top ads`).join("\n");
+    const aList = PROMISES.map((x) => `   - "${x.en}" — ${x.share}% of top ads`).join("\n");
+    const personaRule = pSel === "auto" ? "Pick, for each hook, the persona from this list that best fits the script and product." :
+      pSel === "mix" ? `Spread these ${nHooks} hooks across the top personas (use at least 4 different ones), weighting toward the bigger shares.` :
+      pSel.startsWith("code:") ? `Every hook targets our internal persona ${pSel.slice(5)} (${codeHint(pSel.slice(5))}). Use the script and CS instructions for the rest of the profile. In "persona" output "${pSel.slice(5)}".` :
+      pSel === "custom" ? ($("personaCustom").value.trim() ? `Every hook targets this persona, described by our team: "${$("personaCustom").value.trim().slice(0, 500)}". In "persona" output a 2-5 word Slovenian label for it.` : "Pick, for each hook, the persona that best fits the script and product.") :
+      `Every hook targets this persona: "${PERSONAS[+pSel].en}".`;
+    const angleRule = aSel === "auto" ? "Pick, for each hook, the ad angle from this list that best fits the script." :
+      aSel === "mix" ? `Spread these ${nHooks} hooks across the top ad angles (use at least 4 different ones).` :
+      `Every hook leads into this ad angle: "${PROMISES[+aSel].en}".`;
+    const fSel = $("fmt").value;
+    const formatRule = fSel === "ultra" ? "VIDEO TYPE: Ultra VSL. Use playbook section A (first-person drama) for every hook; the conspiracy and proof angles are told inside the drama." :
+      fSel === "mini" ? "VIDEO TYPE: Mini VSL. Use playbook section B for every hook (historical paradox, symptom/ingredient listicle, explainer, organ address, UGC twist, 'did everything right'); ingredients or the product may appear early." :
+      fSel === "animation" ? "VIDEO TYPE: Animation. Every hook is a fully animated piece led by an animated character: usually a personified mascot (an ingredient, an organ, the problem itself as a cute 'villain', e.g. 'I'm the stuck poop in your gut, and here are 5 things I want you to keep doing') or an animated narrator in a short story. The VO is the character's voice. Keep it goofy and charming, never gross." :
+      fSel === "vougc" ? "VIDEO TYPE: Voiceover UGC. Every hook is a first-person testimonial VO over authentic, handheld smartphone-style B-roll of everyday life (morning kitchen, the drink being made, walking, a couple at home). Hook with a twist testimonial ('For years I was the one saying no. Now it's my husband.'). The product may appear by 4–6 s in a natural moment (the pouch on the counter, stirring the drink). Nobody talks to camera in the B-roll; the VO carries it." :
+      fSel === "mix" ? `VIDEO TYPE: mixed. Spread the ${nHooks} hooks across types: mostly Ultra VSL dramas (section A), plus Mini VSL formats (section B), Animation (personified mascot) and Voiceover UGC (testimonial VO over UGC B-roll).` :
+      "VIDEO TYPE: infer from the script's length and style. A long first-person story means section A; a short product or ingredient script means section B; a character-voiced script means Animation; a personal testimonial means Voiceover UGC.";
+    const stage = $("stage").value;
+    const noProduct = `ABSOLUTE RULE, overriding the playbook and the video type: NO PRODUCT IN THE HOOK. Do not show, name or hint at the product, the brand, the pouch, the packaging, a branded drink or a mug being prepared, in the VO or in any shot. Generic ingredients in nature (a mushroom in the forest) are fine only in Mini VSL formats and never as a product.`;
+    const stageRule = `FUNNEL STAGE: ${stage}. ${STAGES[stage].en}${stage === "ST3" ? "" : "\n" + noProduct}`;
+    const audience = `${stageRule}
+
+${formatRule}
+
+MARKET DATA (top-performing ads in our niche, from Atria):
+1. Top personas:
+${pList}
+   ${personaRule}
+   Men are a third of the top personas: when the persona is a man, the narrator is a man about 45–55 and the same drama mechanics apply with his relationships (wife, ex-wife, colleagues, his boss, a younger rival, his kids). Stress, energy and confidence are his hidden pain the way body image is hers.
+2. Top ad angles (the promise the rest of the VSL pays off):
+${aList}
+   ${angleRule}
+   The hook itself stays story-first and does not pitch. The ad angle shapes what the story is secretly about: the hidden cause the narrator will discover later (hormones, gut, cortisol, turning 40, midlife changes). The VO can plant it in one word or detail, never as a claim.`;
+    const total = mix.reduce((n, [, c]) => n + c, 0);
+    return `You are a senior direct-response creative strategist and AI-video director. You write scroll-stopping opening hooks for Ultra VSL ads and turn each one into a production-ready prompt for an AI video generator.
+
+TASK: Create exactly ${total} different hooks for the VSL below, each as a complete video-generation prompt. Each hook is ${sec} seconds long and must lead naturally into the existing script.
+
+ANGLES (exactly this many, in this order):
+${mix.map(([a, c]) => `- ${c} × "${a}": ${ANGLE_DEF[a]}`).join("\n")}
+
+${COMPLIANCE}
+
+${PLAYBOOK}
+
+${audience}
+
+HARD RULES:
+- NO ON-SCREEN TEXT of any kind: no captions, subtitles, titles, labels, signs, packaging text, number plates or logos. The idea must work purely through images, acting and sound. Every prompt's CONSTRAINTS must say: "No text, captions, subtitles, signs, number plates or logos."
+- ${speech}
+- The narrator's story may be dramatized fiction, as in the winners. But claims about the product, results, numbers, studies, doctors and reviews must come ONLY from the script or CS instructions. Never invent them, and never make medical promises.
+- Follow every CS instruction, especially anything we must not show or say.
+- The ${total} hooks must be genuinely different ideas (different situation, setting, emotion and first image), not variations of one scene.
+- The first 1 second is the HOOK shot and must stop the scroll on its own.
+- No word limit: be as detailed as the example, but every sentence must describe something visible or audible.
+
+PROMPT FORMAT — follow this structure, section order, headings and level of detail exactly (this is our house format; the content below is only an example, do not reuse its story):
+- "DURATION: ${sec} SECONDS"
+- One style paragraph: "${sec}-second vertical 9:16 Ultra VSL ad, …" describing render style, texture, light, acting and camera, ending with the number of shots.
+- CHARACTERS: one bullet per recurring character with exact, repeatable appearance and clothing, every garment and object marked (NO BRAND). Derive the characters from the script's target audience.
+- LOOK: lighting and colour mood; mark flashback shots [PAST] if used.
+- TIMELINE (every shot starts exactly at the given second): consecutive shots covering 0–${sec}s exactly with no gaps, roughly one shot every 1–2.5 s; the first shot is labelled "HOOK –"; every shot starts mid-action and states camera movement.
+- AUDIO
+- CONSTRAINTS (always include: quick cut or flowing transition between every shot; no two consecutive shots alike; every shot starts mid-action; nobody looks into the camera; everything plain (NO BRAND); no text, captions, subtitles, signs, number plates or logos; natural hands and fingers; no slow motion; no digital zoom; plus anything specific to this idea)
+- ENDING STATE: the final frame, so the edit can cut into the VSL.
+
+VISUAL STYLE: ${st ? `Chosen style: ${st.name} — ${st.en}. Write the style paragraph and LOOK in this style.` : sSel === "mix" ? `Vary the style across the hooks, choosing what fits each idea from: ${STYLES.map((x) => `${x.name} (${x.en})`).join("; ")}. Name the chosen style at the start of each style paragraph.` : ""} ${imgs ? `${imgs} images are attached — stills from the reference video at ${frames.slice(0, imgs).map((f) => fmt(f.t)).join(", ")}. Match its visual style, render look, framing and pacing in the style paragraph and LOOK.` : "No reference stills attached."} ${ref ? `Editor's note about the reference/style: ${ref}.` : ""} ${!imgs && !ref && !st && sSel !== "mix" ? "Use the style of the example below." : ""}
+
+EXAMPLE OF THE FORMAT:
+<<<
+${FORMAT_EXAMPLE}
+>>>
+
+OUTPUT: exactly ${total} lines, one compact JSON object per line, nothing else (no code fence, no numbering, no blank lines). Inside "prompt" use \\n for line breaks so each object stays on one line. Each object:
+{"angle":"pain|curiosity|conspiracy|proof","name":"2-4 word label in Slovenian","persona":"the persona name or code used","promise":"exact ad angle from the list","vo":"the opening voiceover (1-3 short sentences that fill the ${sec} seconds) in ${voLang}","sl":"Slovenian translation of vo, or empty string if vo is Slovenian","idea":"what we see, 1-2 sentences in Slovenian","why":"why it stops the scroll, naming which playbook mechanic it uses, 1 sentence in Slovenian","prompt":"the full prompt in English in the format above"}
+
+CS INSTRUCTIONS:
+${cs || "(none given — infer audience and pain points from the script)"}
+
+SCRIPT:
+${script}`;
+  }
+
+  // ---------- generate ----------
+  const ERR = {
+    not_granted: "Claude za to stran ni dovoljen. Dovoli ga v meniju Permissions te strani.",
+    sampling_disabled: "Claude za ta račun trenutno ni na voljo.",
+    rate_limited: "Preveč zahtev naenkrat ali dosežena omejitev porabe. Poskusi čez nekaj minut.",
+    session_expired: "Seja je potekla. Ponovno se prijavi na claude.ai.",
+    prompt_too_large: "Skripta je predolga. Prilepi samo prvih nekaj minut.",
+    image_rejected: "Sličic iz videa ni bilo mogoče poslati. Odstrani video in poskusi znova.",
+    images_unavailable: "Ta pogled ne more pošiljati slik. Odstrani video in poskusi znova (opis stila bo ostal).",
+    refused: "Claude te zahteve ni hotel obdelati. Preveri navodila in skripto ter jih po potrebi omili.",
+    empty_completion: "Odgovor je bil prazen. Poskusi znova.",
+  };
+
+  function parseLine(line) {
+    const s = line.trim().replace(/^```(json)?/, "").replace(/```$/, "").replace(/,$/, "");
+    if (!s.startsWith("{")) return null;
+    try {
+      const o = JSON.parse(s);
+      if (!o.prompt) return null;
+      o.angle = String(o.angle || "").toLowerCase();
+      if (o.angle.startsWith("pain")) o.angle = "pain";
+      if (!ANGLES[o.angle]) o.angle = "curiosity";
+      o.name = String(o.name || ANGLES[o.angle].label);
+      o.idea = String(o.idea || "");
+      o.vo = String(o.vo || "");
+      o.persona = String(o.persona || "");
+      o.promise = String(o.promise || "");
+      o.sl = String(o.sl || "");
+      o.why = String(o.why || "");
+      o.prompt = String(o.prompt).replace(/\\n/g, "\n").trim();
+      o.risks = riskCheck(o.vo + "\n\n" + o.prompt);
+      return o;
+    } catch { return null; }
+  }
+
+  const RISK = [
+    [/\b(scales?|weighing)\b/i, "tehtnica"],
+    [/\b(measuring tape|tape measure)\b/i, "merilni trak"],
+    [/\bbefore[ /-]?(and|&)?[ /-]?after\b|\bsplit[- ]screen\b/i, "before/after"],
+    [/\b(nude|naked|topless|underwear|lingerie|bra|panties)\b/i, "golota"],
+    [/\b(mirror|reflection)\b/i, "ogledalo (mejno)"],
+    [/\b(touch\w*|hold\w*|pat\w*|rub\w*|hand on|hands on|clutch\w*)\b[^.]{0,30}\b(her|his|own)\s+(belly|stomach|tummy)\b/i, "dotikanje trebuha"],
+    [/\b(obese|morbidly|extremely fat|very fat|huge belly)\b/i, "pretirana debelost"],
+    [/\b(pills?|tablets?|capsules?|medicine|medication)\b/i, "zdravila"],
+    [/\b(syringe|injection|needle)s?\b/i, "injekcija"],
+    [/\bblood(y)?\b/i, "kri"],
+    [/\b(knife|knives|gun|pistol|rifle|rope|weapon)s?\b/i, "orožje"],
+    [/\b(drugs?|cocaine|syringe)\b/i, "droge"],
+    [/\b(doctor|nurse|surgeon|hospital|lab coat|laborator(y|ies)|surgery|operating)\b/i, "zdravniki/laboratorij"],
+    [/\b(wound|bruise[ds]?|fracture|injur(y|ies|ed)|bleeding)\b/i, "poškodba"],
+    [/\b(melting|dissolving)\b/i, "topljenje"],
+    [/\b(grab|grabs|grabbing|pinch|pinches|pinching|squeez\w*)\b[^.]{0,40}\b(belly|stomach|waist|thigh|arm|body)\b/i, "prijemanje telesa"],
+    [/\b(rash|swollen|swelling|deform\w*)\b/i, "vidna bolezen"],
+    [/\b(poop|feces|faeces|toilet|vomit\w*|rott\w*|decay\w*)\b/i, "vulgarno"],
+    [/\b(dead|dying|corpse|collaps\w*)\b/i, "bolečina/smrt"],
+  ];
+  const PRODUCT_RE = /\b(tasty dose|coffee 2\.0|matcha 2\.0|collagen 2\.0|refresh 2\.0|pouch|packag\w*|product|the pack|supplement|sachet)\b/i;
+  let genStage = "ST1";
+  function riskCheck(prompt) {
+    const body = String(prompt).split(/\n\s*CONSTRAINTS\s*:/i)[0] + "\n" + (String(prompt).split(/\n\s*ENDING STATE\s*:/i)[1] || "");
+    const out = RISK.filter(([re]) => re.test(body)).map(([, label]) => label);
+    if (genStage !== "ST3" && PRODUCT_RE.test(body)) out.push(`izdelek (pri ${genStage} ga v hooku ne sme biti)`);
+    return [...new Set(out)];
+  }
+
+  function setStatus(html) { $("status").hidden = !html; $("status").innerHTML = html || ""; }
+  function progress(my) {
+    setStatus(`<span class="hop" aria-hidden="true">${SHROOMS[0].svg}${SHROOMS[2].svg}${SHROOMS[4].svg}</span> ${hooks.length ? `${hooks.length} od 10 …` : "Claude bere skripto in piše prompte … prvi pridejo v 1–2 minutah."} <button type="button" class="ghost" id="stop">Ustavi</button>`);
+    $("stop").onclick = () => my.abort();
+  }
+
+  // Two calls in parallel (5 + 5) so ten long prompts arrive faster and stay within one answer's length.
+  const BATCHES = [
+    [["pain", 3], ["curiosity", 2]],
+    [["curiosity", 1], ["conspiracy", 2], ["proof", 2]],
+  ];
+
+  async function runBatch(mix, my) {
+    let pending = "";
+    const cap = mix.reduce((n, [, c]) => n + c, 0);
+    let got = 0;
+    const take = (l) => { const h = parseLine(l); if (h && got < cap) { hooks.push(h); got++; return true; } return false; };
+    const opts = {
+      signal: my.signal, cache: false,
+      onText: ({ delta }) => {
+        const lines = (pending + delta).split("\n");
+        pending = lines.pop();
+        let added = false;
+        for (const l of lines) added = take(l) || added;
+        if (added && ctl === my) { progress(my); render(pendingCount()); }
+      },
+    };
+    const imgs = frames.length && maxImages ? frames.slice(0, maxImages).map((f) => f.blob) : null;
+    if (imgs) opts.images = imgs;
+    try {
+      const r = await sample(buildPrompt(mix), opts);
+      take(pending);
+      return { ok: true, truncated: r.truncated };
+    } catch (e) {
+      take(pending);
+      return { ok: false, code: e?.code };
+    }
+  }
+
+  async function generate() {
+    $("formErr").hidden = true;
+    if ($("script").value.trim().length < 40) {
+      $("formErr").textContent = "Najprej prilepi skripto (vsaj nekaj stavkov).";
+      $("formErr").hidden = false; $("script").focus(); return;
+    }
+    if (!sample) { $("noClaude").hidden = false; return; }
+    $("dur").value = duration();
+    genStage = $("stage").value;
+    ctl?.abort();
+    const my = (ctl = new AbortController());
+    hooks = []; isExample = false; running = 1; render(10);
+    $("go").disabled = true; $("again").disabled = true;
+    progress(my);
+
+    const results = await Promise.all(BATCHES.map((m) => runBatch(m, my)));
+    if (ctl !== my) return;               // a newer run took over
+    ctl = null; running = 0;
+
+    const fails = results.filter((r) => !r.ok);
+    const codes = fails.map((r) => r.code);
+    if (codes.includes("not_granted") || codes.includes("sampling_disabled")) blocked = true;
+    if (codes.includes("cancelled")) setStatus(hooks.length ? `Ustavljeno pri ${hooks.length} od 10.` : "Ustavljeno.");
+    else if (fails.length) {
+      const msg = ERR[codes.find((c) => ERR[c])] || "Povezava s Claudom se je prekinila.";
+      setStatus(hooks.length ? `${msg} Prišlo je ${hooks.length} od 10.` : msg);
+    } else if (results.some((r) => r.truncated)) setStatus("Odgovor je bil predolg in je bil prekinjen. Poskusi s krajšo dolžino ali krajšo skripto.");
+    else setStatus(hooks.length ? "" : "Odgovora ni bilo mogoče prebrati. Klikni »Generiraj« še enkrat.");
+
+    $("go").disabled = blocked; $("again").disabled = blocked;
+    render(0);
+  }
+
+  $("form").addEventListener("submit", (e) => { e.preventDefault(); generate(); });
+  $("again").addEventListener("click", generate);
+
+  hooks = EXAMPLES; render(0);
+  showStage(); $("stage").addEventListener("change", showStage);
+  $("personaCustom").hidden = $("persona").value !== "custom";
+
+  // ---------- capability ----------
+  (async () => {
+    try { sample = await window.claude?.use?.("sample"); } catch { sample = null; }
+    if (!sample) { $("noClaude").hidden = false; return; }
+    try { const lim = await sample.limits(); maxImages = lim?.images?.maxCount || 0; } catch { maxImages = 0; }
+  })();
+})();
+</script>
+
+</body>
+</html>
